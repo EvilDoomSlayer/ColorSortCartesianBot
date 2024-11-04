@@ -1,17 +1,56 @@
+/*
+ * Arduino_Code.c
+ * Created: 02/11/2024 05:48:52 p. m.
+ * Author : Team_1
+ */
+
+/*
+* Programa del Cartesian Robot
+* Este programa controla:
+* - 4 drivers DRV8833
+* - 1 Servomotor Mg995
+* - 1 Sensor de color TCS3200
+* - 2 Sensores ultrasónicos HC-SR04
+* - 3 limit-sitches
+* - Botonera Industrial
+* 
+* Este programa automatiza las clasificacion de cubos por color.
+*/
+
+//Librerias
 #include <Servo.h>
-Servo myservo;  // Crea un objeto servo para controlar el servomotor
 
+//Protitipos de funciones
+void portsInit(void);
+void homeX(void);
+void homeY(void);
+void homeZ(void);
+
+
+//Definicion de pines
+//Step-Motors
+#define dirPinY   2  
+#define stepPinY  3 
+#define dirPinZ   4  
+#define stepPinZ  5
+#define dirPinX   6 
+#define stepPinX  7
+
+//Limit Switches
+#define limitX    9   
+#define limitY    10 
+#define limitZ    11  
+
+//Servomotor
+#define servoPin  8
+
+//Inicializacion del objeto Servo
+Servo Gripper; 
+
+
+//Variables Globales
+//Servomotor
 int pos = 0;    // Variable para almacenar la posición del servomotor
-const int dirPinY = 2;  
-const int stepPinY = 3; 
-const int dirPinZ = 4;  
-const int stepPinZ = 5; 
-const int dirPinX = 6;  
-const int stepPinX = 7; 
-
-const int limitX = 9;   
-const int limitY = 10; 
-const int limitZ = 11;  
 
 // Variables para controlar los pasos de cada eje
 const int stepsY = 200; // Pasos del eje Y
@@ -23,22 +62,17 @@ int stepDelayY = 1000; // Velocidad del eje Y
 int stepDelayZ = 800;  // Velocidad del eje Z
 int stepDelayX = 800; // Velocidad del eje X
 
+
+
+
 void setup() {
-   myservo.attach(8);
-   pinMode(dirPinY, OUTPUT);
-   pinMode(stepPinY, OUTPUT);
-   pinMode(dirPinZ, OUTPUT);
-   pinMode(stepPinZ, OUTPUT);
-   pinMode(dirPinX, OUTPUT);
-   pinMode(stepPinX, OUTPUT);
-   pinMode(limitX, INPUT);
-   pinMode(limitY, INPUT);
+  portsInit();
 }
 
 void loop() {
-   HOMEX();  // HOME EN EJE X
-   HOMEY();  // HOME EN EJE Y
-   HOMEZ();
+   homeX();  // HOME EN EJE X
+   homeY();  // HOME EN EJE Y
+   homeZ();
    SERVO();  // Controla el movimiento del servomotor
 
    // Movimientos para cada eje en ambas direcciones con sus respectivos pasos y velocidad
@@ -63,7 +97,29 @@ void loop() {
    // delay(1000);
 }
 
-void HOMEX() {
+
+
+
+void portsInit(void) {
+  //Step-Motors
+  pinMode(dirPinY, OUTPUT);
+  pinMode(stepPinY, OUTPUT);
+  pinMode(dirPinZ, OUTPUT);
+  pinMode(stepPinZ, OUTPUT);
+  pinMode(dirPinX, OUTPUT);
+  pinMode(stepPinX, OUTPUT);
+  //Limit sitches
+  pinMode(limitX, INPUT);
+  pinMode(limitY, INPUT);
+  pinMode(limitZ, INPUT);
+  //Servomotor
+  Gripper.attach(servoPin);
+}
+
+
+
+
+void homeX(void) {
   // Homing para el eje X hasta encontrar el límite
   while (digitalRead(limitX) == LOW) {
     digitalWrite(dirPinX, HIGH);
@@ -75,7 +131,7 @@ void HOMEX() {
 }
 
 
-void HOMEY() {
+void homeY(void) {
   // Homing para el eje Y hasta encontrar el límite
   while (digitalRead(limitY) == LOW) {
     digitalWrite(dirPinY, HIGH);
@@ -86,7 +142,7 @@ void HOMEY() {
   }
 }
 
-void HOMEZ() {
+void homeZ(void) {
   // Homing para el eje Y hasta encontrar el límite
   while (digitalRead(limitZ) == LOW) {
     digitalWrite(dirPinZ, HIGH);
@@ -96,6 +152,8 @@ void HOMEZ() {
     delayMicroseconds(stepDelayZ);
   }
 }
+
+
 
 void moverEje(int dirPin, int stepPin, bool direccion, int pasos, int stepDelay) {
   // Función genérica para mover cualquier eje en una dirección y cantidad de pasos especificada
@@ -108,18 +166,22 @@ void moverEje(int dirPin, int stepPin, bool direccion, int pasos, int stepDelay)
   }
 }
 
+
+
+
+
 void SERVO() {
   // Movimiento del servomotor
   // ABRIR
   for (pos = 0; pos <= 100; pos += 1) {
-    myservo.write(pos);
+    Gripper.write(pos);
     delay(10);
   }
   delay(1000);
   
   // CERRAR
   for (pos = 100; pos >= 0; pos -= 1) {
-    myservo.write(pos);
+    Gripper.write(pos);
     delay(3);
   }
   delay(1000);
