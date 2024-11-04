@@ -7,7 +7,7 @@
 /*
 * Programa del Cartesian Robot
 * Este programa controla:
-* - 4 drivers DRV8833
+* - 4 drivers DRV8825
 * - 1 Servomotor Mg995
 * - 1 Sensor de color TCS3200
 * - 2 Sensores ultrasónicos HC-SR04
@@ -25,6 +25,7 @@ void portsInit(void);
 void homeX(void);
 void homeY(void);
 void homeZ(void);
+void homeAllAxes(void);
 int getRedPW(void);
 int getGreenPW(void);
 int getBluePW(void);
@@ -39,6 +40,9 @@ String detectarColor(int (*readRed)(), int (*readGreeen)(), int (*readBlue)());
 #define stepPinZ  5
 #define dirPinX   6 
 #define stepPinX  7
+#define M0        1
+#define M1        13
+#define M2        12
 
 //Limit Switches
 #define limitX    9   
@@ -130,6 +134,9 @@ void portsInit(void) {
   pinMode(stepPinZ, OUTPUT);
   pinMode(dirPinX, OUTPUT);
   pinMode(stepPinX, OUTPUT);
+  pinMode(M0, OUPUT);
+  pinMode(M1, OUPUT);
+  pinMode(M2, OUPUT);
   //Limit sitches
   pinMode(limitX, INPUT);
   pinMode(limitY, INPUT);
@@ -151,6 +158,10 @@ void portsInit(void) {
 
 
 void homeX(void) {
+  //Desactiva Microsteps para un movimiento mas rapido
+  digitalWrite(M0, LOW);
+  digitalWrite(M1, LOW);
+  digitalWrite(M2, LOW);
   // Homing para el eje X hasta encontrar el límite
   while (digitalRead(limitX) == LOW) {
     digitalWrite(dirPinX, HIGH);
@@ -163,6 +174,10 @@ void homeX(void) {
 
 
 void homeY(void) {
+  //Desactiva Microsteps para un movimiento mas rapido
+  digitalWrite(M0, LOW);
+  digitalWrite(M1, LOW);
+  digitalWrite(M2, LOW);
   // Homing para el eje Y hasta encontrar el límite
   while (digitalRead(limitY) == LOW) {
     digitalWrite(dirPinY, HIGH);
@@ -174,6 +189,10 @@ void homeY(void) {
 }
 
 void homeZ(void) {
+  //Desactiva Microsteps para un movimiento mas rapido
+  digitalWrite(M0, LOW);
+  digitalWrite(M1, LOW);
+  digitalWrite(M2, LOW);
   // Homing para el eje Y hasta encontrar el límite
   while (digitalRead(limitZ) == LOW) {
     digitalWrite(dirPinZ, HIGH);
@@ -184,6 +203,71 @@ void homeZ(void) {
   }
 }
 
+
+void homeAllAxes(void) {
+  //Desactiva Microsteps para un movimiento mas rapido
+  digitalWrite(M0, LOW);
+  digitalWrite(M1, LOW);
+  digitalWrite(M2, LOW);
+  // Variables para controlar cuándo cada motor llega a su home
+  bool xHomed = false;
+  bool yHomed = false;
+  bool zHomed = false;
+
+  // Bucle que sigue ejecutándose hasta que todos los ejes están en home
+  while (!xHomed || !yHomed || !zHomed) {
+    
+    // Homing del eje X
+    if (!xHomed) {  // Si el eje X aún no ha llegado a su límite
+      if (digitalRead(limitX) == LOW) {
+        digitalWrite(dirPinX, HIGH);
+        digitalWrite(stepPinX, HIGH);
+        delayMicroseconds(stepDelayX);
+        digitalWrite(stepPinX, LOW);
+        delayMicroseconds(stepDelayX);
+      } else {
+        xHomed = true;  // Marca el eje X como homed si alcanza el límite
+      }
+    }
+
+    // Homing del eje Y
+    if (!yHomed) {  // Si el eje Y aún no ha llegado a su límite
+      if (digitalRead(limitY) == LOW) {
+        digitalWrite(dirPinY, HIGH);
+        digitalWrite(stepPinY, HIGH);
+        delayMicroseconds(stepDelayY);
+        digitalWrite(stepPinY, LOW);
+        delayMicroseconds(stepDelayY);
+      } else {
+        yHomed = true;  // Marca el eje Y como homed si alcanza el límite
+      }
+    }
+
+    // Homing del eje Z
+    if (!zHomed) {  // Si el eje Z aún no ha llegado a su límite
+      if (digitalRead(limitZ) == LOW) {
+        digitalWrite(dirPinZ, HIGH);
+        digitalWrite(stepPinZ, HIGH);
+        delayMicroseconds(stepDelayZ);
+        digitalWrite(stepPinZ, LOW);
+        delayMicroseconds(stepDelayZ);
+      } else {
+        zHomed = true;  // Marca el eje Z como homed si alcanza el límite
+      }
+    }
+  }
+}
+
+
+void moveTo(int x, int y, int z) {
+  //Activa Microsteps para un movimiento mas preciso
+  digitalWrite(M0, HIGH);
+  digitalWrite(M1, HIGH);
+  digitalWrite(M2, HIGH);
+  //Convierte las coordenadas deseadas a pasos
+  int x_steps = x
+
+}
 
 
 void moverEje(int dirPin, int stepPin, bool direccion, int pasos, int stepDelay) {
