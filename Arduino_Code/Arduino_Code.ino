@@ -25,6 +25,10 @@ void portsInit(void);
 void homeX(void);
 void homeY(void);
 void homeZ(void);
+int getRedPW(void);
+int getGreenPW(void);
+int getBluePW(void);
+String detectarColor(int (*readRed)(), int (*readGreeen)(), int (*readBlue)());
 
 
 //Definicion de pines
@@ -44,6 +48,13 @@ void homeZ(void);
 //Servomotor
 #define servoPin  8
 
+//Color sensor
+#define S0 40
+#define S1 41
+#define S2 42
+#define S3 43
+#define sensorOut 44
+
 //Inicializacion del objeto Servo
 Servo Gripper; 
 
@@ -62,8 +73,19 @@ int stepDelayY = 1000; // Velocidad del eje Y
 int stepDelayZ = 800;  // Velocidad del eje Z
 int stepDelayX = 800; // Velocidad del eje X
 
-
-
+// Sensor de color
+//Valores RGB para detectar el color blanco
+#define whiteRed 70
+#define whiteGreen 70
+#define whiteBlue 70
+//Valores RGB para detectar el color negro
+#define blackRed 495
+#define blackGreen 490
+#define blackBlue 400
+//Valores RGB para detectar el color verde
+#define greenRed 380
+#define greenGreen 320
+#define greenBlue 300
 
 void setup() {
   portsInit();
@@ -114,6 +136,15 @@ void portsInit(void) {
   pinMode(limitZ, INPUT);
   //Servomotor
   Gripper.attach(servoPin);
+  //Sensor de color
+	pinMode(S0, OUTPUT);
+	pinMode(S1, OUTPUT);
+	pinMode(S2, OUTPUT);
+	pinMode(S3, OUTPUT);
+	pinMode(sensorOut, INPUT);
+	// Set Frequency scaling to 20%
+	digitalWrite(S0,HIGH);
+	digitalWrite(S1,LOW);
 }
 
 
@@ -187,3 +218,63 @@ void SERVO() {
   delay(1000);
 }
 
+
+
+
+// Function to read Red Pulse Widths
+int getRedPW(void) {
+	// Set sensor to read Red only
+	digitalWrite(S2,LOW);
+	digitalWrite(S3,LOW);
+	// Define integer to represent Pulse Width
+	int PW;
+	// Read the output Pulse Width
+	PW = pulseIn(sensorOut, LOW);
+	// Return the value
+	return PW;
+}
+
+// Function to read Green Pulse Widths
+int getGreenPW(void) {
+	// Set sensor to read Green only
+	digitalWrite(S2,HIGH);
+	digitalWrite(S3,HIGH);
+	// Define integer to represent Pulse Width
+	int PW;
+	// Read the output Pulse Width
+	PW = pulseIn(sensorOut, LOW);
+	// Return the value
+	return PW;
+}
+
+// Function to read Blue Pulse Widths
+int getBluePW(void) {
+	// Set sensor to read Blue only
+	digitalWrite(S2,LOW);
+	digitalWrite(S3,HIGH);
+	// Define integer to represent Pulse Width
+	int PW;
+	// Read the output Pulse Width
+	PW = pulseIn(sensorOut, LOW);
+	// Return the value
+	return PW;
+}
+
+String detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)()) {
+    int red = readRed();
+    delay(200);
+    int green = readGreen();
+    delay(200);
+    int blue = readBlue();
+    delay(200);
+    if (red < whiteRed && green < whiteGreen && blue < whiteBlue) {
+      return "White";
+    }
+    if (red > blackRed && green > blackGreen && blue > blackBlue) {
+      return "Black";
+    }
+    if (red > greenRed && green < greenGreen && blue > greenBlue) {
+      return "Green";
+    }
+    else return "NA";
+}
