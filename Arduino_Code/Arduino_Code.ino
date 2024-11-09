@@ -26,6 +26,8 @@ void homeX(void);
 void homeY(void);
 void homeZ(void);
 void homeAllAxes(void);
+void moveToSteps(int pos[3]);
+void moveToMicroSteps(int pos[3]);
 int getRedPW(void);
 int getGreenPW(void);
 int getBluePW(void);
@@ -77,6 +79,10 @@ int stepDelayY = 1000; // Velocidad del eje Y
 int stepDelayZ = 800;  // Velocidad del eje Z
 int stepDelayX = 800; // Velocidad del eje X
 
+// Posiciones 
+int pos1[3] = {300, 300, 300};
+
+
 // Sensor de color
 //Valores RGB para detectar el color blanco
 #define whiteRed 70
@@ -96,31 +102,12 @@ void setup() {
 }
 
 void loop() {
-   homeX();  // HOME EN EJE X
-   homeY();  // HOME EN EJE Y
-   homeZ();
+   homeAllAxes();
+   moveToSteps(pos1);
+   moveToMicroSteps(pos1);
+   delay(3000);
+   homeAllAxes();
    SERVO();  // Controla el movimiento del servomotor
-
-   // Movimientos para cada eje en ambas direcciones con sus respectivos pasos y velocidad
-   // HIGH = DERECHA   LOW = IZQUIERDA
- 
-   // moverEje(dirPinY, stepPinY, HIGH, stepsY, stepDelayY); // Mueve el eje Y en dirección positiva
-   // delay(1000);
-
-   // moverEje(dirPinY, stepPinY, LOW, stepsY, stepDelayY);  // Mueve el eje Y en dirección negativa
-   // delay(1000);
-
-   // moverEje(dirPinZ, stepPinZ, HIGH, stepsZ, stepDelayZ); // Mueve el eje Z en dirección positiva
-   // delay(1000);
-
-   // moverEje(dirPinZ, stepPinZ, LOW, stepsZ, stepDelayZ);  // Mueve el eje Z en dirección negativa
-   // delay(1000);
-
-   // moverEje(dirPinX, stepPinX, HIGH, stepsX, stepDelayX); // Mueve el eje X en dirección positiva
-   // delay(1000);
-
-   // moverEje(dirPinX, stepPinX, LOW, stepsX, stepDelayX);  // Mueve el eje X en dirección negativa
-   // delay(1000);
 }
 
 
@@ -134,9 +121,9 @@ void portsInit(void) {
   pinMode(stepPinZ, OUTPUT);
   pinMode(dirPinX, OUTPUT);
   pinMode(stepPinX, OUTPUT);
-  pinMode(M0, OUPUT);
-  pinMode(M1, OUPUT);
-  pinMode(M2, OUPUT);
+  pinMode(M0, OUTPUT);
+  pinMode(M1, OUTPUT);
+  pinMode(M2, OUTPUT);
   //Limit sitches
   pinMode(limitX, INPUT);
   pinMode(limitY, INPUT);
@@ -203,7 +190,7 @@ void homeZ(void) {
   }
 }
 
-
+/*
 void homeAllAxes(void) {
   //Desactiva Microsteps para un movimiento mas rapido
   digitalWrite(M0, LOW);
@@ -257,17 +244,97 @@ void homeAllAxes(void) {
     }
   }
 }
+*/
+
+void homeAllAxes(void) {
+  homeY();
+  homeZ();
+  homeZ();
+}
 
 
-void moveTo(int x, int y, int z) {
+
+
+
+void moveToSteps(int pos[3]) {
+  //Desacriva Microsteps para un movimiento mas preciso
+  digitalWrite(M0, LOW);
+  digitalWrite(M1, LOW);
+  digitalWrite(M2, LOW);
+  //Convierte las coordenadas deseadas a pasos
+  int x_steps = pos[1];
+  int y_steps = pos[2];
+  int z_steps = pos[3];
+  
+ // Función para mover eje Y una cantidad de pasos especificada
+  digitalWrite(dirPinY, LOW);
+  for (int i = 0; i < y_steps; i++) {
+    digitalWrite(stepPinY, HIGH);
+    delayMicroseconds(stepDelayY);  // Usa el retardo específico del eje
+    digitalWrite(stepPinY, LOW);
+    delayMicroseconds(stepDelayY);
+  }
+
+// Función para mover eje X una cantidad de pasos especificada
+  digitalWrite(dirPinX, LOW);
+  for (int i = 0; i < x_steps; i++) {
+    digitalWrite(stepPinX, HIGH);
+    delayMicroseconds(stepDelayX);  // Usa el retardo específico del eje
+    digitalWrite(stepPinX, LOW);
+    delayMicroseconds(stepDelayX);
+  }
+
+// Función para mover eje Z una cantidad de pasos especificada
+  digitalWrite(dirPinZ, LOW);
+  for (int i = 0; i < z_steps; i++) {
+    digitalWrite(stepPinZ, HIGH);
+    delayMicroseconds(stepDelayZ);  // Usa el retardo específico del eje
+    digitalWrite(stepPinZ, LOW);
+    delayMicroseconds(stepDelayZ);
+  }
+}
+
+
+void moveToMicroSteps(int pos[3]) {
   //Activa Microsteps para un movimiento mas preciso
   digitalWrite(M0, HIGH);
   digitalWrite(M1, HIGH);
   digitalWrite(M2, HIGH);
   //Convierte las coordenadas deseadas a pasos
-  int x_steps = x
+  int x_steps = pos[1];
+  int y_steps = pos[2];
+  int z_steps = pos[3];
+  
+ // Función para mover eje Y una cantidad de pasos especificada
+  digitalWrite(dirPinY, LOW);
+  for (int i = 0; i < y_steps; i++) {
+    digitalWrite(stepPinY, HIGH);
+    delayMicroseconds(stepDelayY);  // Usa el retardo específico del eje
+    digitalWrite(stepPinY, LOW);
+    delayMicroseconds(stepDelayY);
+  }
 
+// Función para mover eje X una cantidad de pasos especificada
+  digitalWrite(dirPinX, LOW);
+  for (int i = 0; i < x_steps; i++) {
+    digitalWrite(stepPinX, HIGH);
+    delayMicroseconds(stepDelayX);  // Usa el retardo específico del eje
+    digitalWrite(stepPinX, LOW);
+    delayMicroseconds(stepDelayX);
+  }
+
+// Función para mover eje Z una cantidad de pasos especificada
+  digitalWrite(dirPinZ, LOW);
+  for (int i = 0; i < z_steps; i++) {
+    digitalWrite(stepPinZ, HIGH);
+    delayMicroseconds(stepDelayZ);  // Usa el retardo específico del eje
+    digitalWrite(stepPinZ, LOW);
+    delayMicroseconds(stepDelayZ);
+  }
 }
+
+
+
 
 
 void moverEje(int dirPin, int stepPin, bool direccion, int pasos, int stepDelay) {
@@ -280,8 +347,6 @@ void moverEje(int dirPin, int stepPin, bool direccion, int pasos, int stepDelay)
     delayMicroseconds(stepDelay);
   }
 }
-
-
 
 
 
