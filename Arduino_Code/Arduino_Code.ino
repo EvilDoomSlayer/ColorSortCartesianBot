@@ -26,6 +26,12 @@ void homeX(void);
 void homeY(void);
 void homeZ(void);
 void homeAllAxes(void);
+void moveXSteps (int steps, int dir);
+void moveYSteps (int steps, int dir);
+void moveZSteps (int steps, int dir);
+void moveXMicroSteps (int steps, int dir);
+void moveYMicroSteps (int steps, int dir);
+void moveZMicroSteps (int steps, int dir);
 void moveToSteps(int pos[6]);
 void moveToMicroSteps(int pos[6]);
 void upZSteps(int steps);
@@ -82,11 +88,6 @@ enum states { ON, OFF} state; // Enumeración para los estados del sistema
 
 //Servomotor
 int pos = 0;    // Variable para almacenar la posición del servomotor
-
-// Variables para controlar los pasos de cada eje
-const int stepsY = 200; // Pasos del eje Y
-const int stepsZ = 150; // Pasos del eje Z
-const int stepsX = 100; // Pasos del eje X
 
 // Variables de retardo específicas para cada eje (en microsegundos)
 int stepDelayY = 1000; // Velocidad del eje Y
@@ -537,6 +538,7 @@ void downZMicroSteps(int steps) {
   }
 }
 
+/*
 void moverEje(int dirPin, int stepPin, bool direccion, int pasos, int stepDelay) {
   // Función genérica para mover cualquier eje en una dirección y cantidad de pasos especificada
   digitalWrite(dirPin, direccion);
@@ -547,7 +549,7 @@ void moverEje(int dirPin, int stepPin, bool direccion, int pasos, int stepDelay)
     delayMicroseconds(stepDelay);
   }
 }
-
+*/
 
 void openGripper (void) {
   for (pos = 0; pos <= 100; pos += 1) {
