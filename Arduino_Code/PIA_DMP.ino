@@ -91,9 +91,9 @@ enum states { ON, OFF} state; // Enumeración para los estados del sistema
 int pos = 0;    // Variable para almacenar la posición del servomotor
 
 // Variables de retardo específicas para cada eje (en microsegundos)
-int stepDelayY = 1000; // Velocidad del eje Y
-int stepDelayZ = 1600;  // Velocidad del eje Z
-int stepDelayX = 1000; // Velocidad del eje X
+int stepDelayY = 1100; // Velocidad del eje Y
+int stepDelayZ = 1500;  // Velocidad del eje Z
+int stepDelayX = 1100; // Velocidad del eje X
 
 // Posiciones 
 int pos1[6] = {300, 300, 100, 1, 1, 1};
@@ -155,18 +155,37 @@ void loop() {
         delay(1000);
         openGripper();
         delay(1000);
-        moveXSteps(300,1);
+        moveYSteps(500,1);
         delay(1000);
-        moveYSteps(300,1);
+        moveXSteps(500,1);
         delay(1000);
-        downZSteps(300);
-        delay(1000);
+        //BAJA POR BLOQUE
+        downZSteps(2700);
+        delay(10000);
         closeGripper();
         delay(1000);
-        upZSteps(100);
+        //SUBE CON BLOQUE AGARRADO
+        upZSteps(950);
         delay(1000);
-        homeAllAxes();
+        moveXSteps(500,1);
         delay(1000);
+        //DETECTA COLOR
+        downZSteps(300);
+        delay(1000);
+        upZSteps(300);
+        delay(1000);
+        moveYSteps(200,1);
+        delay(1000);
+        //DEJA BLOQUE EN RECIPIENTE
+        downZSteps(450);
+        delay(1000);
+        openGripper();
+        delay(1000);
+        //TEMINA DE DEJARLO
+        upZSteps(300);
+        delay(1000);
+        //homeAllAxes();
+        //delay(1000);
     }
 }
 
@@ -471,18 +490,18 @@ void downZMicroSteps(int steps) {
 
 
 
-void openGripper (void) {
+void closeGripper (void) {
   for (pos = 0; pos <= 100; pos += 1) {
     Gripper.write(pos);
-    delay(10);
+    delay(20);
   }
   Gripper.write(100);
 }
 
-void closeGripper (void) {
+void openGripper (void) {
   for (pos = 100; pos >= 0; pos -= 1) {
     Gripper.write(pos);
-    delay(3);
+    delay(20);
   }
   Gripper.write(0);
 }
