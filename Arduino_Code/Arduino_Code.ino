@@ -41,8 +41,8 @@ void closeGripper (void);
 int getRedPW(void);
 int getGreenPW(void);
 int getBluePW(void);
-String detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)());
-void deteccionBloque(void);
+void detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)());
+bool deteccionBloque(void);
 
 //Definicion de pines
 //Step-Motors
@@ -76,6 +76,9 @@ void deteccionBloque(void);
 #define onPin 2
 #define buttonGnd 3
 
+//Ultrasonico
+#define triggerPin 0
+#define echoPin 0
 
 //Direcciones
 #define RIGHT 1
@@ -84,8 +87,7 @@ void deteccionBloque(void);
 #define UP    0
 
 //Deteccion Bloque
-const int Trigger = ;
-const int Echo = ; 
+const int BloqueDeteccion = 0; 
 
 //Inicializacion del objeto Servo
 Servo Gripper; 
@@ -114,17 +116,24 @@ int pos3[6] = {300, 300, 100, 0, 0, 0};
 
 // Sensor de color
 //Valores RGB para detectar el color blanco
-#define whiteRed 70
-#define whiteGreen 70
-#define whiteBlue 70
+#define whiteRed 30
+#define whiteGreen 30
+#define whiteBlue 25
 //Valores RGB para detectar el color negro
-#define blackRed 495
-#define blackGreen 490
-#define blackBlue 400
+#define blackRed 137
+#define blackGreen 152
+#define blackBlue 126
 //Valores RGB para detectar el color verde
-#define greenRed 380
-#define greenGreen 320
-#define greenBlue 300
+#define greenRed 156
+#define greenGreen 102
+#define greenBlue 98
+//Tolerancia +- del sesnsor de color
+#define tolerancia 15
+
+enum colors { WHITE, BLACK, GREEN, OTHER} color; // Enumeración para los estados del sistema
+
+//Ultrasonico 
+#define distanciaMinimaBloque 2
 
 void setup() {
   portsInit();
@@ -142,8 +151,7 @@ void loop() {
       case CALIBRACION:
           homeAllAxes();
           delay(100);
-          deteccionBloque();
-          if(BloqueDeteccion <= 3){ //Transición
+          if(deteccionBloque() == 1) { //Transición
             state = BLOQUE;
           }
       break;
@@ -198,9 +206,9 @@ void portsInit(void) {
   pinMode(buttonGnd, OUTPUT);
   digitalWrite(buttonGnd,LOW);
   //Deteccion bloque
-   pinMode(Trigger, OUTPUT);
-  pinMode(Echo, INPUT);
-  digitalWrite(Trigger, LOW);
+   pinMode(triggerPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  digitalWrite(triggerPin, LOW);
 }
 
 void init_interrupt_E4(void) {
@@ -574,35 +582,42 @@ int getBluePW(void) {
 	return PW;
 }
 
-String detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)()) {
+void detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)()) {
     int red = readRed();
     delay(200);
     int green = readGreen();
     delay(200);
     int blue = readBlue();
     delay(200);
-    if (red < whiteRed && green < whiteGreen && blue < whiteBlue) {
-      return "White";
+    if ((red+tolerancia) < whiteRed && (green+tolerancia) < whiteGreen && (blue+tolerancia) < whiteBlue) {
+      color = WHITE;
     }
-    if (red > blackRed && green > blackGreen && blue > blackBlue) {
-      return "Black";
+    if ((red-tolerancia) > blackRed && (green-tolerancia) > blackGreen && (blue-tolerancia) > blackBlue) {
+      color = BLACK;
     }
-    if (red > greenRed && green < greenGreen && blue > greenBlue) {
-      return "Green";
+    if ((red-tolerancia) > greenRed && (green+tolerancia) < greenGreen && (blue-tolerancia) > greenBlue) {
+      color = GREEN;
     }
-    else return "NA";
+    else color = OTHER;
 }
 
-void deteccionBloque(void){
+bool deteccionBloque(void) {
   long t; //Tiempo de regreso
   long BloqueDeteccion; //Distancia en centímetros
   
-  digitalWrite(Trigger, HIGH);
+  digitalWrite(triggerPin, HIGH);
   delayMicroseconds(10); //Se envía un pulso de 10us
-  digitalWrite(Trigger, LOW);
+  digitalWrite(triggerPin, LOW);
  
-  t = pulseIn(Echo, HIGH); 
+  t = pulseIn(echoPin, HIGH); 
   BloqueDeteccion = t/59; //Se obtiene la distancia en centímetros
 
+  if (BloqueDeteccion > distanciaMinimaBloque) {
+      return 0;
+  }
+
+  else if (BloqueDeteccion < distanciaMinimaBloque) {
+      return 1;
+  }
 }
 
