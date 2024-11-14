@@ -42,7 +42,7 @@ int getRedPW(void);
 int getGreenPW(void);
 int getBluePW(void);
 String detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)());
-
+void deteccionBloque(void);
 
 //Definicion de pines
 //Step-Motors
@@ -83,6 +83,9 @@ String detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)());
 #define DOWN  1
 #define UP    0
 
+//Deteccion Bloque
+const int Trigger = ;
+const int Echo = ; 
 
 //Inicializacion del objeto Servo
 Servo Gripper; 
@@ -90,7 +93,7 @@ Servo Gripper;
 
 //Variables Globales
 //Maquina de estados
-enum states { ON, OFF} state; // Enumeración para los estados del sistema
+enum states { INIT, CALIBRACION, BLOQUE, SENSOR, NEGRO, BLANCO, VERDE, ERROR, WAIT} state; // Enumeración para los estados del sistema
 bool stateChange = 0;
 
 //Servomotor
@@ -126,51 +129,40 @@ int pos3[6] = {300, 300, 100, 0, 0, 0};
 void setup() {
   portsInit();
   init_interrupt_E4();
-  state = OFF;
+  state = INIT;
 }
 
 //MAIN
 void loop() {
     switch (state) {
-      case OFF:
+      case INIT:
           
       break;
 
-      case ON:
+      case CALIBRACION:
           homeAllAxes();
-          delay(1000);
-          openGripper();
-          delay(1000);
-          moveYSteps(500,RIGHT);
-          delay(1000);
-          moveXSteps(500,RIGHT);
-          delay(1000);
-          //BAJA POR BLOQUE
-          moveZSteps(2700,DOWN);
-          delay(10000);
-          closeGripper();
-          delay(1000);
-          //SUBE CON BLOQUE AGARRADO
-          moveZSteps(950,UP);
-          delay(1000);
-          moveXSteps(500,RIGHT);
-          delay(1000);
-          //DETECTA COLOR
-          moveZSteps(300,DOWN);
-          delay(1000);
-          moveZSteps(300,UP);
-          delay(1000);
-          moveYSteps(200,RIGHT);
-          delay(1000);
-          //DEJA BLOQUE EN RECIPIENTE
-          moveZSteps(450,DOWN);
-          delay(1000);
-          openGripper();
-          delay(1000);
-          //TEMINA DE DEJARLO
-          moveZSteps(300,UP);
-          delay(1000);
+          delay(100);
+          deteccionBloque();
+          if(BloqueDeteccion <= 3){ //Transición
+            state = BLOQUE;
+          }
       break;
+
+      case BLOQUE:
+          
+      break;
+
+      case SENSOR:
+          
+      break;
+
+      case WAIT:
+          delay(1000);
+           if(BloqueDeteccion <= 3){ //Transición
+            state = BLOQUE;
+          }
+      break;
+
   }
 }
 
@@ -205,6 +197,10 @@ void portsInit(void) {
   pinMode(onPin, INPUT);
   pinMode(buttonGnd, OUTPUT);
   digitalWrite(buttonGnd,LOW);
+  //Deteccion bloque
+   pinMode(Trigger, OUTPUT);
+  pinMode(Echo, INPUT);
+  digitalWrite(Trigger, LOW);
 }
 
 void init_interrupt_E4(void) {
@@ -224,10 +220,10 @@ void init_interrupt_E4(void) {
 
 ISR(INT4_vect) {
     if (PINE & (1 << PE4)) {
-        state = ON;  // Si PE4 está en HIGH, cambia estado a 1
+        state = CALIBRACION;  // Si PE4 está en HIGH, cambia estado a 1
         //stateChange=1;
     } else {
-        state = OFF;  // Si PE4 está en LOW, cambia estado a 0
+        state = INIT;  // Si PE4 está en LOW, cambia estado a 0
     }
 }
 
@@ -303,7 +299,7 @@ void homeAllAxes(void) {
     // Homing del eje X
     if (!xHomed) {  // Si el eje X aún no ha llegado a su límite
       if (digitalRead(limitX) == LOW) {
-        digitalWrite(dirPinX, HIGH);
+        digitalWrite(dirPinX, LOW);
         digitalWrite(stepPinX, HIGH);
         delayMicroseconds(stepDelayX);
         digitalWrite(stepPinX, LOW);
@@ -596,3 +592,17 @@ String detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)()) {
     }
     else return "NA";
 }
+
+void deteccionBloque(void){
+  long t; //Tiempo de regreso
+  long BloqueDeteccion; //Distancia en centímetros
+  
+  digitalWrite(Trigger, HIGH);
+  delayMicroseconds(10); //Se envía un pulso de 10us
+  digitalWrite(Trigger, LOW);
+ 
+  t = pulseIn(Echo, HIGH); 
+  BloqueDeteccion = t/59; //Se obtiene la distancia en centímetros
+
+}
+

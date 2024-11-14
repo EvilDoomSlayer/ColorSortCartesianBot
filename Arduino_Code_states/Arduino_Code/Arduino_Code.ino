@@ -299,7 +299,7 @@ void homeAllAxes(void) {
     // Homing del eje X
     if (!xHomed) {  // Si el eje X aún no ha llegado a su límite
       if (digitalRead(limitX) == LOW) {
-        digitalWrite(dirPinX, HIGH);
+        digitalWrite(dirPinX, LOW);
         digitalWrite(stepPinX, HIGH);
         delayMicroseconds(stepDelayX);
         digitalWrite(stepPinX, LOW);
