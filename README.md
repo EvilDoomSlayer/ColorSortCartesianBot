@@ -1,6 +1,6 @@
 Precise Cartesian Cube Sorter
 
-This repository contains Arduino code for a precision-driven Cartesian robot designed to classify and sort cubes by color. The robot is equipped with 4 stepper motors for movement control, each powered by a DRV8833 driver, ensuring smooth and precise Cartesian motion. The gripper also utilizes a stepper motor, providing enhanced accuracy for handling each cube during sorting.
+This repository contains Arduino code for a precision-driven Cartesian robot designed to classify and sort cubes by color. The robot is equipped with 4 stepper motors for movement control, each powered by a DRV8825 driver, ensuring smooth and precise Cartesian motion. The gripper also utilizes a stepper motor, providing enhanced accuracy for handling each cube during sorting.
 
 Features:
 
