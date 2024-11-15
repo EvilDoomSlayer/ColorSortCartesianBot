@@ -43,6 +43,12 @@ int getGreenPW(void);
 int getBluePW(void);
 void detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)());
 bool deteccionBloque(void);
+void goToBlock(void);
+void goToSensor(void);
+void goToWhite(void);
+void goToBlack(void);
+void goToGreen(void);
+void goToDiscard(void);
 
 //Definicion de pines
 //Step-Motors
@@ -76,9 +82,8 @@ bool deteccionBloque(void);
 #define onPin 2
 #define buttonGnd 3
 
-//Ultrasonico
-#define triggerPin 0
-#define echoPin 0
+// Fotoresistencia
+#define ldrPin 7
 
 //Direcciones
 #define RIGHT 1
@@ -86,8 +91,6 @@ bool deteccionBloque(void);
 #define DOWN  1
 #define UP    0
 
-//Deteccion Bloque
-const int BloqueDeteccion = 0; 
 
 //Inicializacion del objeto Servo
 Servo Gripper; 
@@ -95,23 +98,21 @@ Servo Gripper;
 
 //Variables Globales
 //Maquina de estados
-enum states { INIT, CALIBRACION, BLOQUE, SENSOR, NEGRO, BLANCO, VERDE, ERROR, WAIT} state; // Enumeración para los estados del sistema
-bool stateChange = 0;
+enum states { INIT, HOME, BLOQUE, SENSOR, NEGRO, BLANCO, VERDE, ERROR, PAUSE} state; // Enumeración para los estados del sistema
+int lastState;
 
 //Servomotor
 int pos = 0;    // Variable para almacenar la posición del servomotor
 
 // Variables de retardo específicas para cada eje (en microsegundos)
 int stepDelayY = 1100; // Velocidad del eje Y
-int stepDelayZ = 1500;  // Velocidad del eje Z
+int stepDelayZ = 600;  // Velocidad del eje Z
 int stepDelayX = 1100; // Velocidad del eje X
 
 // Posiciones 
 int pos1[6] = {300, 300, 100, 1, 1, 1};
 int pos2[6] = {200, 200, 0, 1, 1, 1};
 int pos3[6] = {300, 300, 100, 0, 0, 0};
-
-
 
 
 // Sensor de color
@@ -132,12 +133,12 @@ int pos3[6] = {300, 300, 100, 0, 0, 0};
 
 enum colors { WHITE, BLACK, GREEN, OTHER} color; // Enumeración para los estados del sistema
 
-//Ultrasonico 
-#define distanciaMinimaBloque 2
+// LDR
+#define nivelLuzMinimo 3.5           // Voltaje mínimo requerido para detectar el bloque
+
 
 void setup() {
   portsInit();
-  init_interrupt_E4();
   state = INIT;
 }
 
@@ -145,32 +146,120 @@ void setup() {
 void loop() {
     switch (state) {
       case INIT:
-          
+          if (digitalRead(onPin) == 1) {
+            lastState = state; // Guardar el estado actual antes de cambiar
+            state = HOME;
+          }
       break;
 
-      case CALIBRACION:
+      case HOME:
           homeAllAxes();
-          delay(100);
-          if(deteccionBloque() == 1) { //Transición
+          openGripper();
+          if (digitalRead(onPin) == 0) {
+            lastState = state;
+            state = PAUSE;
+          }
+          if (deteccionBloque() == 1) {
+            lastState = state;
             state = BLOQUE;
           }
       break;
 
       case BLOQUE:
-          
-      break;
-
-      case SENSOR:
-          
-      break;
-
-      case WAIT:
-          delay(1000);
-           if(BloqueDeteccion <= 3){ //Transición
-            state = BLOQUE;
+          goToBlock();
+          if (digitalRead(onPin) == 0) {
+            lastState = state;
+            state = PAUSE;
+          } else {
+            lastState = state;
+            state = SENSOR;
           }
       break;
 
+      case SENSOR:
+          goToSensor();
+          detectarColor(getRedPW(), getGreenPW(), getBluePW());
+          delay(2000);
+          if (digitalRead(onPin) == 0) {
+            lastState = state;
+            state = PAUSE;
+          }
+          switch (color) {
+            case WHITE:
+                lastState = state;
+                state = BLANCO;
+            break;
+
+            case BLACK:
+                lastState = state;
+                state = NEGRO;
+            break;
+
+            case GREEN:
+                lastState = state;
+                state = VERDE;
+            break;
+
+            case OTHER:
+                lastState = state;
+                state = ERROR;
+            break;
+          }
+      break;
+
+      case BLANCO:
+          goToWhite();
+          if (digitalRead(onPin) == 0) {
+            lastState = state;
+            state = PAUSE;
+          } else {
+            lastState = state;
+            state = HOME;
+          }
+      break;
+
+      case NEGRO:
+          goToBlack();
+          if (digitalRead(onPin) == 0) {
+            lastState = state;
+            state = PAUSE;
+          } else {
+            lastState = state;
+            state = HOME;
+          }
+      break;
+
+      case VERDE:
+          goToGreen();
+          if (digitalRead(onPin) == 0) {
+            lastState = state;
+            state = PAUSE;
+          } else {
+            lastState = state;
+            state = HOME;
+          }
+      break;
+
+      case ERROR:
+          goToDiscard();
+          if (digitalRead(onPin) == 0) {
+            lastState = state;
+            state = PAUSE;
+          } else {
+            lastState = state;
+            state = HOME;
+          }
+      break;
+
+      case PAUSE:
+          delay(5000);
+          if ((digitalRead(onPin) == 1) && lastState != INIT) {
+            state = lastState;
+          }
+          else {
+            state = HOME;
+          }
+      break;
   }
 }
 
@@ -206,33 +295,7 @@ void portsInit(void) {
   pinMode(buttonGnd, OUTPUT);
   digitalWrite(buttonGnd,LOW);
   //Deteccion bloque
-   pinMode(triggerPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-  digitalWrite(triggerPin, LOW);
-}
-
-void init_interrupt_E4(void) {
-    // Configurar el pin PE4 como entrada
-    DDRE &= ~(1 << PE4);
-
-    // Habilitar la interrupción en cambio de nivel (rising edge) para PE4
-    // INT4 está asociado a PE4 en el ATmega2560
-    EICRB |= (1 << ISC40);  // Configura para flanco de cambio (subida o bajada)
-    
-    // Habilitar interrupción INT4
-    EIMSK |= (1 << INT4);
-    
-    // Habilitar interrupciones globales
-    sei();
-}
-
-ISR(INT4_vect) {
-    if (PINE & (1 << PE4)) {
-        state = CALIBRACION;  // Si PE4 está en HIGH, cambia estado a 1
-        //stateChange=1;
-    } else {
-        state = INIT;  // Si PE4 está en LOW, cambia estado a 0
-    }
+  pinMode(ldrPin, INPUT);
 }
 
 
@@ -289,62 +352,6 @@ void homeAllAxes(void) {
   homeY();
   homeZ();
 }
-
-/*
-void homeAllAxes(void) {
-  //Desactiva Microsteps para un movimiento mas rapido
-  digitalWrite(M0, LOW);
-  digitalWrite(M1, LOW);
-  digitalWrite(M2, LOW);
-  // Variables para controlar cuándo cada motor llega a su home
-  bool xHomed = false;
-  bool yHomed = false;
-  bool zHomed = false;
-
-  // Bucle que sigue ejecutándose hasta que todos los ejes están en home
-  while (!xHomed || !yHomed || !zHomed) {
-    
-    // Homing del eje X
-    if (!xHomed) {  // Si el eje X aún no ha llegado a su límite
-      if (digitalRead(limitX) == LOW) {
-        digitalWrite(dirPinX, LOW);
-        digitalWrite(stepPinX, HIGH);
-        delayMicroseconds(stepDelayX);
-        digitalWrite(stepPinX, LOW);
-        delayMicroseconds(stepDelayX);
-      } else {
-        xHomed = true;  // Marca el eje X como homed si alcanza el límite
-      }
-    }
-
-    // Homing del eje Y
-    if (!yHomed) {  // Si el eje Y aún no ha llegado a su límite
-      if (digitalRead(limitY) == LOW) {
-        digitalWrite(dirPinY, HIGH);
-        digitalWrite(stepPinY, HIGH);
-        delayMicroseconds(stepDelayY);
-        digitalWrite(stepPinY, LOW);
-        delayMicroseconds(stepDelayY);
-      } else {
-        yHomed = true;  // Marca el eje Y como homed si alcanza el límite
-      }
-    }
-
-    // Homing del eje Z
-    if (!zHomed) {  // Si el eje Z aún no ha llegado a su límite
-      if (digitalRead(limitZ) == LOW) {
-        digitalWrite(dirPinZ, HIGH);
-        digitalWrite(stepPinZ, HIGH);
-        delayMicroseconds(stepDelayZ);
-        digitalWrite(stepPinZ, LOW);
-        delayMicroseconds(stepDelayZ);
-      } else {
-        zHomed = true;  // Marca el eje Z como homed si alcanza el límite
-      }
-    }
-  }
-}
-*/
 
 
 void moveXSteps (int steps, int dir) {
@@ -525,6 +532,78 @@ void moveToMicroSteps(int pos[6]) {
 }
 
 
+void goToBlock(void) {
+    delay(1000);
+    openGripper();
+    delay(1000);
+    moveYSteps(500,RIGHT);
+    delay(1000);
+    moveXSteps(500,RIGHT);
+    delay(1000);
+    //BAJA POR BLOQUE
+    moveZSteps(2700,DOWN);
+    delay(10000);
+    closeGripper();
+}
+void goToSensor(void) {
+    delay(1000);
+    moveZSteps(950,UP);
+    delay(1000);
+    moveXSteps(500,RIGHT);
+    delay(1000);
+    //DETECTA COLOR
+    moveZSteps(300,DOWN);
+    delay(1000);
+    moveZSteps(300,UP);
+}
+
+void goToWhite(void) {
+    delay(1000);
+    moveYSteps(200,RIGHT);
+    delay(1000);
+    moveZSteps(450,DOWN);
+    delay(1000);
+    openGripper();
+    delay(1000);
+    moveZSteps(300,UP);
+}
+
+void goToBlack(void) {
+    delay(1000);
+    moveYSteps(300,RIGHT);
+    delay(1000);
+    moveZSteps(450,DOWN);
+    delay(1000);
+    openGripper();
+    delay(1000);
+    moveZSteps(300,UP);
+}
+void goToGreen(void) {
+    delay(1000);
+    moveYSteps(400,RIGHT);
+    delay(1000);
+    moveZSteps(450,DOWN);
+    delay(1000);
+    openGripper();
+    delay(1000);
+    moveZSteps(300,UP);
+}
+void goToDiscard(void) {
+    delay(1000);
+    moveYSteps(700,RIGHT);
+    delay(1000);
+    moveZSteps(450,DOWN);
+    delay(1000);
+    openGripper();
+    delay(1000);
+    moveZSteps(300,UP);
+}
+
+
+
+
+
+
 void closeGripper (void) {
   for (pos = 0; pos <= 100; pos += 1) {
     Gripper.write(pos);
@@ -602,22 +681,21 @@ void detectarColor(int (*readRed)(), int (*readGreen)(), int (*readBlue)()) {
 }
 
 bool deteccionBloque(void) {
-  long t; //Tiempo de regreso
-  long BloqueDeteccion; //Distancia en centímetros
   
-  digitalWrite(triggerPin, HIGH);
-  delayMicroseconds(10); //Se envía un pulso de 10us
-  digitalWrite(triggerPin, LOW);
- 
-  t = pulseIn(echoPin, HIGH); 
-  BloqueDeteccion = t/59; //Se obtiene la distancia en centímetros
+  float ldrRead = analogRead(ldrPin);
+  float voltage = 5.0 - ((ldrRead / 1023.0) * 5);
+  
+   if (voltage >= nivelLuzMinimo) { // Si el voltaje es mayor o igual al nivel minimo, hay un bloque
+        return 1;
+    } 
+    
+    else { // Si el voltaje es menor al nivel mínimo, no hay un bloque
+        return 0;
+    }
 
-  if (BloqueDeteccion > distanciaMinimaBloque) {
-      return 0;
-  }
-
-  else if (BloqueDeteccion < distanciaMinimaBloque) {
-      return 1;
-  }
 }
+
+
+
+
 
