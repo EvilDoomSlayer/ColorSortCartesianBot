@@ -10,7 +10,7 @@
 * - 4 drivers DRV8825
 * - 1 Servomotor Mg995
 * - 1 Sensor de color TCS3200
-* - 2 Sensores ultrasónicos HC-SR04
+* - 1 LDR
 * - 3 limit-sitches
 * - Botonera Industrial
 * 
@@ -105,9 +105,9 @@ int lastState;
 int pos = 0;    // Variable para almacenar la posición del servomotor
 
 // Variables de retardo específicas para cada eje (en microsegundos)
-int stepDelayY = 1100; // Velocidad del eje Y
-int stepDelayZ = 600;  // Velocidad del eje Z
-int stepDelayX = 1100; // Velocidad del eje X
+#define stepDelayY 1100 // Velocidad del eje Y
+#define stepDelayZ 600  // Velocidad del eje Z
+#define stepDelayX 1100 // Velocidad del eje X
 
 // Posiciones 
 int pos1[6] = {300, 300, 100, 1, 1, 1};
@@ -130,11 +130,13 @@ int pos3[6] = {300, 300, 100, 0, 0, 0};
 #define greenBlue 98
 //Tolerancia +- del sesnsor de color
 #define tolerancia 15
+// Enumeración para los posibles colores del sistema
+enum colors { WHITE, BLACK, GREEN, OTHER} color; 
 
-enum colors { WHITE, BLACK, GREEN, OTHER} color; // Enumeración para los estados del sistema
 
 // LDR
-#define nivelLuzMinimo 3.5           // Voltaje mínimo requerido para detectar el bloque
+// Voltaje mínimo requerido para detectar el bloque
+#define nivelLuzMinimo 3.5           
 
 
 void setup() {
@@ -145,121 +147,150 @@ void setup() {
 //MAIN
 void loop() {
     switch (state) {
-      case INIT:
-          if (digitalRead(onPin) == 1) {
-            lastState = state; // Guardar el estado actual antes de cambiar
-            state = HOME;
-          }
-      break;
-
-      case HOME:
-          homeAllAxes();
-          openGripper();
-          if (digitalRead(onPin) == 0) {
-            lastState = state;
-            state = PAUSE;
-          }
-          if (deteccionBloque() == 1) {
-            lastState = state;
-            state = BLOQUE;
-          }
-      break;
-
-      case BLOQUE:
-          goToBlock();
-          if (digitalRead(onPin) == 0) {
-            lastState = state;
-            state = PAUSE;
-          } else {
-            lastState = state;
-            state = SENSOR;
-          }
-      break;
-
-      case SENSOR:
-          goToSensor();
-          detectarColor(getRedPW(), getGreenPW(), getBluePW());
-          delay(2000);
-          if (digitalRead(onPin) == 0) {
-            lastState = state;
-            state = PAUSE;
-          }
-          switch (color) {
-            case WHITE:
-                lastState = state;
-                state = BLANCO;
+        case INIT:
+            if (digitalRead(onPin) == 1) {
+              lastState = state; // Guardar el estado actual antes de cambiar
+              state = HOME;
+            }
             break;
 
-            case BLACK:
-                lastState = state;
-                state = NEGRO;
+        case HOME:
+            homeAllAxes();
+            openGripper();
+            if (deteccionBloque() == 1) {
+              lastState = state;
+              state = BLOQUE;
+            }
             break;
 
-            case GREEN:
-                lastState = state;
-                state = VERDE;
+        case BLOQUE:
+            goToBlock();
+            if (digitalRead(onPin) == 0) {
+              lastState = state;
+              state = PAUSE;
+            } else {
+              lastState = state;
+              state = SENSOR;
+            }
             break;
 
-            case OTHER:
-                lastState = state;
-                state = ERROR;
+        case SENSOR:
+            goToSensor();
+            detectarColor(getRedPW(), getGreenPW(), getBluePW());
+            delay(2000);
+            if (digitalRead(onPin) == 0) {
+              lastState = state;
+              state = PAUSE;
+            } else {
+                switch (color) {
+                  case WHITE:
+                      lastState = state;
+                      state = BLANCO;
+                      break;
+
+                  case BLACK:
+                      lastState = state;
+                      state = NEGRO;
+                      break;
+
+                  case GREEN:
+                      lastState = state;
+                      state = VERDE;
+                      break;
+
+                  case OTHER:
+                      lastState = state;
+                      state = ERROR;
+                      break;
+                  }
+            }
             break;
-          }
-      break;
 
-      case BLANCO:
-          goToWhite();
-          if (digitalRead(onPin) == 0) {
-            lastState = state;
-            state = PAUSE;
-          } else {
-            lastState = state;
-            state = HOME;
-          }
-      break;
+        case BLANCO:
+            goToWhite();
+            if (digitalRead(onPin) == 0) {
+              lastState = state;
+              state = PAUSE;
+            } else {
+              lastState = state;
+              state = HOME;
+            }
+            break;
 
-      case NEGRO:
-          goToBlack();
-          if (digitalRead(onPin) == 0) {
-            lastState = state;
-            state = PAUSE;
-          } else {
-            lastState = state;
-            state = HOME;
-          }
-      break;
+        case NEGRO:
+            goToBlack();
+            if (digitalRead(onPin) == 0) {
+              lastState = state;
+              state = PAUSE;
+            } else {
+              lastState = state;
+              state = HOME;
+            }
+            break;
 
-      case VERDE:
-          goToGreen();
-          if (digitalRead(onPin) == 0) {
-            lastState = state;
-            state = PAUSE;
-          } else {
-            lastState = state;
-            state = HOME;
-          }
-      break;
+        case VERDE:
+            goToGreen();
+            if (digitalRead(onPin) == 0) {
+              lastState = state;
+              state = PAUSE;
+            } else {
+              lastState = state;
+              state = HOME;
+            }
+            break;
 
-      case ERROR:
-          goToDiscard();
-          if (digitalRead(onPin) == 0) {
-            lastState = state;
-            state = PAUSE;
-          } else {
-            lastState = state;
-            state = HOME;
-          }
-      break;
+        case ERROR:
+            goToDiscard();
+            if (digitalRead(onPin) == 0) {
+              lastState = state;
+              state = PAUSE;
+            } else {
+              lastState = state;
+              state = HOME;
+            }
+            break;
 
-      case PAUSE:
-          delay(5000);
-          if ((digitalRead(onPin) == 1) && lastState != INIT) {
-            state = lastState;
-          }
-          else {
-            state = HOME;
-          }
-      break;
+        case PAUSE:
+            delay(5000);
+            if (digitalRead(onPin) == 1) {
+              switch (lastState) {
+                  case BLOQUE:
+                      state = SENSOR;
+                      break;
+
+                  case SENSOR:
+                      switch (color) {
+                        case WHITE:
+                            lastState = state;
+                            state = BLANCO;
+                            break;
+
+                        case BLACK:
+                            lastState = state;
+                            state = NEGRO;
+                            break;
+
+                        case GREEN:
+                            lastState = state;
+                            state = VERDE;
+                            break;
+
+                        case OTHER:
+                            lastState = state;
+                            state = ERROR;
+                            break;
+                        }
+                      break;
+
+                    case NEGRO:
+                    case BLANCO:
+                    case VERDE:
+                    case ERROR:
+                        state = HOME;
+                        break;
+                }
+            }
+            break;
   }
 }
 
@@ -301,9 +332,9 @@ void portsInit(void) {
 
 
 void homeX(void) {
-  //Desactiva Microsteps para un movimiento mas rapido
+  //Activa Microsteps para 1/4 de paso
   digitalWrite(M0, LOW);
-  digitalWrite(M1, LOW);
+  digitalWrite(M1, HIGH);
   digitalWrite(M2, LOW);
   // Homing para el eje X hasta encontrar el límite
   while (digitalRead(limitX) == LOW) {
@@ -317,9 +348,9 @@ void homeX(void) {
 
 
 void homeY(void) {
-  //Desactiva Microsteps para un movimiento mas rapido
+  //Activa Microsteps para 1/4 de paso
   digitalWrite(M0, LOW);
-  digitalWrite(M1, LOW);
+  digitalWrite(M1, HIGH);
   digitalWrite(M2, LOW);
   // Homing para el eje Y hasta encontrar el límite
   while (digitalRead(limitY) == LOW) {
@@ -332,9 +363,9 @@ void homeY(void) {
 }
 
 void homeZ(void) {
-  //Desactiva Microsteps para un movimiento mas rapido
+  //Activa Microsteps para 1/4 de paso
   digitalWrite(M0, LOW);
-  digitalWrite(M1, LOW);
+  digitalWrite(M1, HIGH);
   digitalWrite(M2, LOW);
   // Homing para el eje Y hasta encontrar el límite
   while (digitalRead(limitZ) == LOW) {
@@ -443,10 +474,10 @@ void moveToSteps(int pos[6]) {
 
 
 void moveXMicroSteps (int steps, int dir) {
-  //Desactiva Microsteps para un movimiento mas preciso
-  digitalWrite(M0, HIGH);
+  //Activa Microsteps para 1/4 de paso
+  digitalWrite(M0, LOW);
   digitalWrite(M1, HIGH);
-  digitalWrite(M2, HIGH);
+  digitalWrite(M2, LOW);
 
   if(dir == 1) { // Derecha
       digitalWrite(dirPinX, HIGH);
@@ -466,10 +497,10 @@ void moveXMicroSteps (int steps, int dir) {
 
 
 void moveYMicroSteps (int steps, int dir) {  
-  //Desactiva Microsteps para un movimiento mas preciso
-  digitalWrite(M0, HIGH);
+  //Activa Microsteps para 1/4 de paso
+  digitalWrite(M0, LOW);
   digitalWrite(M1, HIGH);
-  digitalWrite(M2, HIGH);
+  digitalWrite(M2, LOW);
 
   if(dir == 1) { //Derecha
       digitalWrite(dirPinY, LOW);
@@ -489,17 +520,17 @@ void moveYMicroSteps (int steps, int dir) {
 
 
 void moveZMicroSteps (int steps, int dir) { 
-  //Desactiva Microsteps para un movimiento mas preciso
-  digitalWrite(M0, HIGH);
+  //Activa Microsteps para 1/4 de paso
+  digitalWrite(M0, LOW);
   digitalWrite(M1, HIGH);
-  digitalWrite(M2, HIGH);
+  digitalWrite(M2, LOW);
 
   if(dir == 1) { // Abajo
-      digitalWrite(dirPinZ, LOW);
+      digitalWrite(dirPinZ, HIGH);
   }
 
   else if(dir == 0) {  //Arriba
-      digitalWrite(dirPinZ, HIGH);
+      digitalWrite(dirPinZ, LOW);
   }
   
   for (int i = 0; i < steps; i++) {
@@ -685,14 +716,11 @@ bool deteccionBloque(void) {
   float ldrRead = analogRead(ldrPin);
   float voltage = 5.0 - ((ldrRead / 1023.0) * 5);
   
-   if (voltage >= nivelLuzMinimo) { // Si el voltaje es mayor o igual al nivel minimo, hay un bloque
-        return 1;
-    } 
-    
-    else { // Si el voltaje es menor al nivel mínimo, no hay un bloque
-        return 0;
-    }
-
+  if (voltage >= nivelLuzMinimo) { // Si el voltaje es mayor o igual al nivel minimo, hay un bloque
+      return 1;
+  } else { // Si el voltaje es menor al nivel mínimo, no hay un bloque
+      return 0;
+  }
 }
 
 
