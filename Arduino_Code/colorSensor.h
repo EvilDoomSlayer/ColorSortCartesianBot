@@ -5,10 +5,10 @@
 
 // Pin Definition
 #define S0 40
-#define S1 41
-#define S2 42
-#define S3 43
-#define sensorOut 44
+#define S1 42
+#define S2 44
+#define S3 46
+#define sensorOut 48
 
 
 //Valores RGB para detectar el color blanco
