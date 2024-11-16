@@ -63,6 +63,13 @@ int blackPos[6] = {0, 300, 450, RIGHT, RIGHT, DOWN};
 int greenPos[6] = {0, 400, 450, RIGHT, RIGHT, DOWN};
 int discardPos[6] = {500, 450, 450, RIGHT, RIGHT, DOWN};
 
+int blockPosMicroSteps[6] = {2000, 2000, 10800, RIGHT, RIGHT, DOWN};
+int sensorPosMicroSteps[6] = {2000, 0, 1200, RIGHT, RIGHT, DOWN};
+int whitePosMicroSteps[6] = {0, 800, 1800, RIGHT, RIGHT, DOWN};
+int blackPosMicroSteps[6] = {0, 1200, 1800, RIGHT, RIGHT, DOWN};
+int greenPosMicroSteps[6] = {0, 1600, 1800, RIGHT, RIGHT, DOWN};
+int discardPosMicroSteps[6] = {2000, 1800, 1800, RIGHT, RIGHT, DOWN};
+
 
 void setup() {
   portsInit();
@@ -286,6 +293,60 @@ void goToDiscard(void) {
     openGripper();
     delay(1000);
     moveZSteps(300,UP);
+}
+
+
+
+void goToBlockMicroSteps(void) {
+    delay(1000);
+    openGripper();
+    moveToMicroSteps(blockPosMicroSteps);
+    delay(3000);
+    closeGripper();
+    moveZMicroSteps(3800, UP);
+}
+
+void goToSensorMicroSteps(void) {
+    delay(1000);
+    moveToMicroSteps(sensorPosMicroSteps);
+    delay(1000);
+    moveZMicroSteps(1200, UP);
+}
+
+void goToWhiteMicroSteps(void) {
+    delay(1000);
+    moveToMicroSteps(whitePosMicroSteps);
+    delay(1000);
+    openGripper();
+    delay(1000);
+    moveZMicroSteps(1200, UP);
+}
+
+void goToBlackMicroSteps(void) {
+    delay(1000);
+    moveToMicroSteps(blackPosMicroSteps);
+    delay(1000);
+    openGripper();
+    delay(1000);
+    moveZMicroSteps(1200, UP);
+}
+
+void goToGreenMicroSteps(void) {
+    delay(1000);
+    moveToMicroSteps(greenPosMicroSteps);
+    delay(1000);
+    openGripper();
+    delay(1000);
+    moveZMicroSteps(1200, UP);
+}
+
+void goToDiscardMicroSteps(void) {
+    delay(1000);
+    moveToMicroSteps(whitePosMicroSteps);
+    delay(1000);
+    openGripper();
+    delay(1000);
+    moveZMicroSteps(1200, UP);
 }
 
 
