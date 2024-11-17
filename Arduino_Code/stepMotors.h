@@ -35,6 +35,9 @@
 #define UP    0
 
 
+// Conversion
+#define microStepsPerMil 19.178
+
 // Function Prototypes
 void stepMotorsInit(void);
 void homeX(void);

@@ -24,7 +24,7 @@
 #define greenGreen 102
 #define greenBlue 98
 //Tolerancia +- del sesnsor de color
-#define tolerancia 15
+#define tolerancia 30
 
 // Enumeración para los posibles colores del sistema
 enum colors { WHITE, BLACK, GREEN, OTHER};

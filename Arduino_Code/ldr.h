@@ -4,10 +4,10 @@
 #include <Arduino.h>
 
 // Pin Definition
-#define ldrPin 7
+#define ldrPin 34
 
 // Voltaje mínimo requerido para detectar el bloque
-#define nivelLuzMinimo 3.5   
+#define nivelLuzMinimo 4.85   
 
 // Function Prototypes
 void ldrInit(void);

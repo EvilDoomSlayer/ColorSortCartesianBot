@@ -146,7 +146,7 @@ void loop() {
           moveXSteps(500,RIGHT);
           delay(1000);
           //BAJA POR BLOQUE
-          moveZSteps(2700,DOWN);
+          moveZSteps(2570,DOWN);
           delay(10000);
           closeGripper();
           delay(1000);

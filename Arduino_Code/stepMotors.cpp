@@ -229,7 +229,6 @@ void moveZMicroSteps (int steps, int dir) {
 }
 
 
-
 void moveToMicroSteps(int pos[6]) {
   //Convierte las coordenadas deseadas a pasos
   int x_steps = pos[0];

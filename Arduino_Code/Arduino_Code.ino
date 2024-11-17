@@ -56,12 +56,13 @@ int lastState;
 int pos = 0;    // Variable para almacenar la posición del servomotor
 
 // Posiciones 
-int blockPos[6] = {500, 500, 2700, RIGHT, RIGHT, DOWN};
+
+int blockPos[6] = {500, 500, 2470, RIGHT, RIGHT, DOWN};
 int sensorPos[6] = {500, 0, 300, RIGHT, RIGHT, DOWN};
 int whitePos[6] = {0, 200, 450, RIGHT, RIGHT, DOWN};
-int blackPos[6] = {0, 300, 450, RIGHT, RIGHT, DOWN};
-int greenPos[6] = {0, 400, 450, RIGHT, RIGHT, DOWN};
-int discardPos[6] = {500, 450, 450, RIGHT, RIGHT, DOWN};
+int blackPos[6] = {0, 296, 450, RIGHT, RIGHT, DOWN};
+int greenPos[6] = {0, 392, 450, RIGHT, RIGHT, DOWN};
+int discardPos[6] = {300, 0, 450, RIGHT, RIGHT, DOWN};
 
 int blockPosMicroSteps[6] = {2000, 2000, 10800, RIGHT, RIGHT, DOWN};
 int sensorPosMicroSteps[6] = {2000, 0, 1200, RIGHT, RIGHT, DOWN};
@@ -108,8 +109,9 @@ void loop() {
 
         case SENSOR:
             goToSensor();
+            delay(1000);
             detectarColor();
-            delay(2000);
+            delay(500);
             if (digitalRead(onPin) == 0) {
               lastState = state;
               state = PAUSE;
@@ -232,7 +234,8 @@ void portsInit(void) {
   stepMotorsInit();
   //Servomotor
   Gripper.attach(servoPin);
-  //Sensor de color
+  //Sensor de
+   color
 	colorSensorInit();
   //Boton
   pinMode(onPin, INPUT);
@@ -351,7 +354,7 @@ void goToDiscardMicroSteps(void) {
 
 
 void closeGripper (void) {
-  for (pos = 0; pos <= 100; pos += 1) {
+  for (pos = 0; pos <= 55; pos += 1) {
     Gripper.write(pos);
     delay(20);
   }
@@ -359,7 +362,7 @@ void closeGripper (void) {
 }
 
 void openGripper (void) {
-  for (pos = 100; pos >= 0; pos -= 1) {
+  for (pos = 55; pos >= 0; pos -= 1) {
     Gripper.write(pos);
     delay(20);
   }
