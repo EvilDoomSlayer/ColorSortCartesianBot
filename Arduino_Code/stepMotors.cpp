@@ -52,7 +52,7 @@ void homeY(void) {
 void homeZ(void) {
   //Activa Microsteps para 1/4 de paso
   digitalWrite(M0, LOW);
-  digitalWrite(M1, HIGH);
+  digitalWrite(M1, LOW);
   digitalWrite(M2, LOW);
   // Homing para el eje Y hasta encontrar el límite
   while (digitalRead(limitZ) == LOW) {

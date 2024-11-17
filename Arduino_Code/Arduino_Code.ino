@@ -82,7 +82,6 @@ void loop() {
     switch (state) {
         case INIT:
             if (digitalRead(onPin) == 1) {
-              lastState = state; // Guardar el estado actual antes de cambiar
               state = HOME;
             }
             break;
@@ -90,50 +89,47 @@ void loop() {
         case HOME:
             homeAllAxes();
             Gripper.write(0); //Abre el gripper
-            if (deteccionBloque() == 1) {
-              lastState = state;
+            if (digitalRead(onPin) == 0) { 
+              state = INIT;
+            }
+            else if (deteccionBloque() == 1) {  
               state = BLOQUE;
             }
             break;
 
         case BLOQUE:
-            goToBlock();
             if (digitalRead(onPin) == 0) {
-              lastState = state;
+              lastState = state;  // Guardar el estado actual antes de cambiar
               state = PAUSE;
             } else {
-              lastState = state;
+              goToBlock();
               state = SENSOR;
             }
             break;
 
         case SENSOR:
-            goToSensor();
-            delay(1000);
-            detectarColor();
-            delay(500);
             if (digitalRead(onPin) == 0) {
               lastState = state;
               state = PAUSE;
             } else {
+                goToSensor();
+                delay(100);
+                detectarColor();
+                delay(500);
                 switch (color) {
                   case WHITE:
-                      lastState = state;
                       state = BLANCO;
                       break;
 
                   case BLACK:
-                      lastState = state;
                       state = NEGRO;
                       break;
 
                   case GREEN:
-                      lastState = state;
                       state = VERDE;
                       break;
 
                   case OTHER:
-                      lastState = state;
                       state = ERROR;
                       break;
                   }
@@ -141,45 +137,41 @@ void loop() {
             break;
 
         case BLANCO:
-            goToWhite();
             if (digitalRead(onPin) == 0) {
               lastState = state;
               state = PAUSE;
             } else {
-              lastState = state;
+              goToWhite();
               state = HOME;
             }
             break;
 
         case NEGRO:
-            goToBlack();
             if (digitalRead(onPin) == 0) {
               lastState = state;
               state = PAUSE;
             } else {
-              lastState = state;
+              goToBlack();
               state = HOME;
             }
             break;
 
         case VERDE:
-            goToGreen();
             if (digitalRead(onPin) == 0) {
               lastState = state;
               state = PAUSE;
             } else {
-              lastState = state;
+              goToGreen();
               state = HOME;
             }
             break;
 
         case ERROR:
-            goToDiscard();
             if (digitalRead(onPin) == 0) {
               lastState = state;
               state = PAUSE;
             } else {
-              lastState = state;
+              goToDiscard();
               state = HOME;
             }
             break;
@@ -187,45 +179,12 @@ void loop() {
         case PAUSE:
             delay(5000);
             if (digitalRead(onPin) == 1) {
-              switch (lastState) {
-                  case BLOQUE:
-                      state = SENSOR;
-                      break;
-
-                  case SENSOR:
-                      switch (color) {
-                        case WHITE:
-                            lastState = state;
-                            state = BLANCO;
-                            break;
-
-                        case BLACK:
-                            lastState = state;
-                            state = NEGRO;
-                            break;
-
-                        case GREEN:
-                            lastState = state;
-                            state = VERDE;
-                            break;
-
-                        case OTHER:
-                            lastState = state;
-                            state = ERROR;
-                            break;
-                        }
-                      break;
-
-                    case NEGRO:
-                    case BLANCO:
-                    case VERDE:
-                    case ERROR:
-                        state = HOME;
-                        break;
-                }
+              state = lastState;
+            } else {
+              state = HOME;
             }
             break;
-  }
+    }
 }
 
 
@@ -234,8 +193,7 @@ void portsInit(void) {
   stepMotorsInit();
   //Servomotor
   Gripper.attach(servoPin);
-  //Sensor de
-   color
+  //Sensor de color
 	colorSensorInit();
   //Boton
   pinMode(onPin, INPUT);
