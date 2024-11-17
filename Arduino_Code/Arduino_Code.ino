@@ -57,19 +57,19 @@ int pos = 0;    // Variable para almacenar la posición del servomotor
 
 // Posiciones 
 
-int blockPos[6] = {500, 500, 2470, RIGHT, RIGHT, DOWN};
-int sensorPos[6] = {500, 0, 300, RIGHT, RIGHT, DOWN};
-int whitePos[6] = {0, 200, 450, RIGHT, RIGHT, DOWN};
-int blackPos[6] = {0, 296, 450, RIGHT, RIGHT, DOWN};
-int greenPos[6] = {0, 392, 450, RIGHT, RIGHT, DOWN};
-int discardPos[6] = {300, 0, 450, RIGHT, RIGHT, DOWN};
+int blockPos[6] = {495, 712, 0, RIGHT, RIGHT, DOWN};
+int sensorPos[6] = {511, 500, 330, RIGHT, LEFT, DOWN};
+int whitePos[6] = {0, 488, 745, RIGHT, RIGHT, DOWN};
+int blackPos[6] = {0, 488, 745, RIGHT, RIGHT, DOWN};
+int greenPos[6] = {0, 488, 745, RIGHT, RIGHT, DOWN};
+int discardPos[6] = {300, 488, 745, RIGHT, RIGHT, DOWN};
 
-int blockPosMicroSteps[6] = {2000, 2000, 10800, RIGHT, RIGHT, DOWN};
-int sensorPosMicroSteps[6] = {2000, 0, 1200, RIGHT, RIGHT, DOWN};
-int whitePosMicroSteps[6] = {0, 800, 1800, RIGHT, RIGHT, DOWN};
-int blackPosMicroSteps[6] = {0, 1200, 1800, RIGHT, RIGHT, DOWN};
-int greenPosMicroSteps[6] = {0, 1600, 1800, RIGHT, RIGHT, DOWN};
-int discardPosMicroSteps[6] = {2000, 1800, 1800, RIGHT, RIGHT, DOWN};
+int blockPosMicroSteps[6] = {1980, 2848, 0, RIGHT, RIGHT, DOWN};
+int sensorPosMicroSteps[6] = {2045, 2000, 345, RIGHT, LEFT, DOWN};
+int whitePosMicroSteps[6] = {0, 1954, 745, RIGHT, RIGHT, DOWN};
+int blackPosMicroSteps[6] = {0, 1954, 745, RIGHT, RIGHT, DOWN};
+int greenPosMicroSteps[6] = {0, 1954, 745, RIGHT, RIGHT, DOWN};
+int discardPosMicroSteps[6] = {2000, 1954, 745, RIGHT, RIGHT, DOWN};
 
 
 void setup() {
@@ -94,6 +94,7 @@ void loop() {
             }
             else if (deteccionBloque() == 1) {  
               state = BLOQUE;
+              delay(3000);
             }
             break;
 
@@ -102,8 +103,18 @@ void loop() {
               lastState = state;  // Guardar el estado actual antes de cambiar
               state = PAUSE;
             } else {
-              goToBlock();
-              state = SENSOR;
+              goToBlockMicroSteps();
+              if (deteccionBloque() == 0) {  
+                state = HOME;
+              }
+              else if (deteccionBloque() == 1) {
+                moveZSteps(2258, DOWN);
+                delay(500);
+                Gripper.write(50); //Cierra el gripper
+                delay(500);
+                moveZSteps(1000, UP);
+                state = SENSOR;
+              }
             }
             break;
 
@@ -112,8 +123,8 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-                goToSensor();
-                delay(100);
+                goToSensorMicroSteps();
+                delay(1000);
                 detectarColor();
                 delay(500);
                 switch (color) {
@@ -141,7 +152,7 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-              goToWhite();
+              goToWhiteMicroSteps();
               state = HOME;
             }
             break;
@@ -151,7 +162,7 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-              goToBlack();
+              goToBlackMicroSteps();
               state = HOME;
             }
             break;
@@ -161,7 +172,7 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-              goToGreen();
+              goToGreenMicroSteps();
               state = HOME;
             }
             break;
@@ -171,7 +182,7 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-              goToDiscard();
+              goToDiscardMicroSteps();
               state = HOME;
             }
             break;
@@ -205,124 +216,90 @@ void portsInit(void) {
 
 
 void goToBlock(void) {
-    delay(1000);
-    openGripper();
+    Gripper.write(0); //Abre el gripper
     moveToSteps(blockPos);
-    delay(3000);
-    closeGripper();
-    moveZSteps(950,UP);
+    delay(500);
+    Gripper.write(50); //Cierra el gripper
+    delay(500);
+    moveZSteps(1000,UP);
 }
 
 void goToSensor(void) {
-    delay(1000);
     moveToSteps(sensorPos);
-    delay(1000);
-    moveZSteps(300,UP);
 }
 
 void goToWhite(void) {
-    delay(1000);
+    moveZSteps(330,UP);
     moveToSteps(whitePos);
-    delay(1000);
-    openGripper();
-    delay(1000);
+    Gripper.write(0); //Abre el gripper
+    delay(500);
     moveZSteps(300,UP);
 }
 
 void goToBlack(void) {
-    delay(1000);
+    moveZSteps(330,UP);
     moveToSteps(blackPos);
-    delay(1000);
-    openGripper();
-    delay(1000);
+    Gripper.write(0); //Abre el gripper
+    delay(500);
     moveZSteps(300,UP);
 }
 
 void goToGreen(void) {
-    delay(1000);
+    moveZSteps(330,UP);
     moveToSteps(greenPos);
-    delay(1000);
-    openGripper();
-    delay(1000);
-    moveZSteps(300,UP);
+    Gripper.write(0); //Abre el gripper
+    delay(500);
+    moveZSteps(330,UP);
 }
 
 void goToDiscard(void) {
-    delay(1000);
+    moveZSteps(330,UP);
     moveToSteps(whitePos);
-    delay(1000);
-    openGripper();
-    delay(1000);
+    Gripper.write(0); //Abre el gripper
+    delay(500);
     moveZSteps(300,UP);
 }
 
 
 
 void goToBlockMicroSteps(void) {
-    delay(1000);
-    openGripper();
+    Gripper.write(0); //Abre el gripper
     moveToMicroSteps(blockPosMicroSteps);
-    delay(3000);
-    closeGripper();
-    moveZMicroSteps(3800, UP);
 }
 
 void goToSensorMicroSteps(void) {
-    delay(1000);
     moveToMicroSteps(sensorPosMicroSteps);
-    delay(1000);
-    moveZMicroSteps(1200, UP);
 }
 
 void goToWhiteMicroSteps(void) {
-    delay(1000);
+    moveZSteps(345,UP);
     moveToMicroSteps(whitePosMicroSteps);
-    delay(1000);
-    openGripper();
-    delay(1000);
-    moveZMicroSteps(1200, UP);
+    Gripper.write(0); //Abre el gripper
+    delay(500);
+    moveZSteps(300, UP);
 }
 
 void goToBlackMicroSteps(void) {
-    delay(1000);
+    moveZSteps(345,UP);
     moveToMicroSteps(blackPosMicroSteps);
-    delay(1000);
-    openGripper();
-    delay(1000);
-    moveZMicroSteps(1200, UP);
+    Gripper.write(0); //Abre el gripper
+    delay(500);
+    moveZSteps(300, UP);
 }
 
 void goToGreenMicroSteps(void) {
-    delay(1000);
+    moveZSteps(345,UP);
     moveToMicroSteps(greenPosMicroSteps);
-    delay(1000);
-    openGripper();
-    delay(1000);
-    moveZMicroSteps(1200, UP);
+    Gripper.write(0); //Abre el gripper
+    delay(500);
+    moveZSteps(300, UP);
 }
 
 void goToDiscardMicroSteps(void) {
-    delay(1000);
-    moveToMicroSteps(whitePosMicroSteps);
-    delay(1000);
-    openGripper();
-    delay(1000);
-    moveZMicroSteps(1200, UP);
+    moveZSteps(345,UP);
+    moveToMicroSteps(discardPosMicroSteps);
+    Gripper.write(0); //Abre el gripper
+    delay(500);
+    moveZSteps(300, UP);
 }
 
-
-void closeGripper (void) {
-  for (pos = 0; pos <= 55; pos += 1) {
-    Gripper.write(pos);
-    delay(20);
-  }
-  Gripper.write(100);
-}
-
-void openGripper (void) {
-  for (pos = 55; pos >= 0; pos -= 1) {
-    Gripper.write(pos);
-    delay(20);
-  }
-  Gripper.write(0);
-}

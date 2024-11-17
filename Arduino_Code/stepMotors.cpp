@@ -245,5 +245,5 @@ void moveToMicroSteps(int pos[6]) {
   moveXMicroSteps(x_steps, dir_x);
 
   // Función para mover eje Z una cantidad de micro pasos especificada
-  moveZMicroSteps(z_steps, dir_z);
+  moveZSteps(z_steps, dir_z);
 }

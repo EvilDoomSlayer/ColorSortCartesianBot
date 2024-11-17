@@ -23,9 +23,9 @@
 
 
 // Retardo específico para cada eje (en microsegundos)
-#define stepDelayY 1100 // Velocidad del eje Y
+#define stepDelayY 600 // Velocidad del eje Y
 #define stepDelayZ 600  // Velocidad del eje Z
-#define stepDelayX 1100 // Velocidad del eje X
+#define stepDelayX 600 // Velocidad del eje X
 
 
 //Direcciones
