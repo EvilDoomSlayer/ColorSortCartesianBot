@@ -1,9 +1,5 @@
 #include "colorSensor.h"
 
-enum colors color;  // Definir la variable
-
-
-
 void colorSensorInit(void) {
   pinMode(S0, OUTPUT);
 	pinMode(S1, OUTPUT);
@@ -55,24 +51,36 @@ int getBluePW(void) {
 }
 
 
-#include "colorSensor.h"
+int detectarColor(void) {
+  int redMax = 0;
+  int greenMax = 0;
+  int blueMax = 0;
 
-void detectarColor(void) {
-    int red = getRedPW();
-    delay(200);
-    int green = getGreenPW();
-    delay(200);
-    int blue = getBluePW();
-    delay(200);
-    if ((red + tolerancia) < whiteRed && (green + tolerancia) < whiteGreen && (blue + tolerancia) < whiteBlue) {
-        color = WHITE;
-    }
-    if ((red - tolerancia) > blackRed && (green - tolerancia) > blackGreen && (blue - tolerancia) > blackBlue) {
-        color = BLACK;
-    }
-    if ((red - tolerancia) > greenRed && (green + tolerancia) < greenGreen && (blue - tolerancia) > greenBlue) {
-        color = GREEN;
-    } else {
-        color = OTHER;
-    }
+  for (int i = 0; i < iteraciones; i++) {
+    redMax = max(redMax, getRedPW());
+    greenMax = max(greenMax, getGreenPW());
+    blueMax = max(blueMax, getBluePW());
+    delay(10); // Reducido para evitar pausas prolongadas
+  }
+
+    // Detectar color basándonos en los rangos definidos
+  if (abs(redMax - whiteRed) <= tolerancia &&
+      abs(greenMax - whiteGreen) <= tolerancia &&
+      abs(blueMax - whiteBlue) <= tolerancia) {
+    return 0; // Blanco
+  }
+
+  if (abs(redMax - blackRed) <= tolerancia &&
+      abs(greenMax - blackGreen) <= tolerancia &&
+      abs(blueMax - blackBlue) <= tolerancia) {
+    return 1; // Negro
+  }
+
+  if (abs(redMax - greenRed) <= tolerancia &&
+      abs(greenMax - greenGreen) <= tolerancia &&
+      abs(blueMax - greenBlue) <= tolerancia) {
+    return 2; // Verde
+  }
+
+  return 3; // Otro color
 }

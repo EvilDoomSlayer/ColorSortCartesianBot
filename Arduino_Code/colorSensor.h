@@ -6,37 +6,35 @@
 // Pin Definition
 #define S0 40
 #define S1 42
-#define S2 44
+#define S2 38
 #define S3 46
 #define sensorOut 48
 
 
 //Valores RGB para detectar el color blanco
-#define whiteRed 30
-#define whiteGreen 30
-#define whiteBlue 25
+#define whiteRed 26
+#define whiteGreen 24
+#define whiteBlue 24
 //Valores RGB para detectar el color negro
-#define blackRed 137
-#define blackGreen 152
-#define blackBlue 126
+#define blackRed 210
+#define blackGreen 210
+#define blackBlue 210
 //Valores RGB para detectar el color verde
-#define greenRed 156
-#define greenGreen 102
-#define greenBlue 98
+#define greenRed 140
+#define greenGreen 100
+#define greenBlue 101
 //Tolerancia +- del sesnsor de color
-#define tolerancia 30
-
-// Enumeración para los posibles colores del sistema
-enum colors { WHITE, BLACK, GREEN, OTHER};
-extern enum colors color;  // Declarar como externa
-
+#define tolerancia 40
+//Iteraciones
+#define iteraciones 70
 
 // Function Prototypes
 void colorSensorInit(void);
 int getRedPW(void);
 int getGreenPW(void);
 int getBluePW(void);
-void detectarColor(void);
+int detectarColor(void);
+
 
 
 #endif

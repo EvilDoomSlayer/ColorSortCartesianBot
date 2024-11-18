@@ -10,8 +10,10 @@
 * - 4 drivers DRV8825
 * - 1 Servomotor Mg995
 * - 1 Sensor de color TCS3200
-* - 1 LDR
+* - 1 LDR 2MOhms
 * - 3 limit-sitches
+* - 2 Reles 5V
+* - 2 leds 12V 
 * - Botonera Industrial
 * 
 * Este programa automatiza las clasificacion de cubos por color.
@@ -26,8 +28,6 @@
 
 //Protótipos de funciones
 void portsInit(void);
-void openGripper (void);
-void closeGripper (void);
 void goToBlock(void);
 void goToSensor(void);
 void goToWhite(void);
@@ -43,6 +43,10 @@ void goToDiscard(void);
 #define onPin 2
 #define buttonGnd 3
 
+//Leds with relees
+#define ledBlue 7
+#define ledGreen 8
+
 //Inicializacion del objeto Servo
 Servo Gripper; 
 
@@ -52,24 +56,28 @@ Servo Gripper;
 enum states { INIT, HOME, BLOQUE, SENSOR, NEGRO, BLANCO, VERDE, ERROR, PAUSE} state; // Enumeración para los estados del sistema
 int lastState;
 
-//Servomotor
-int pos = 0;    // Variable para almacenar la posición del servomotor
+//Bloques
+#define blocksPerContainers 1  // Blocks -1
+uint8_t whiteBlocks = 0;
+uint8_t blackBlocks = 0;
+uint8_t greenBlocks = 0;
 
-// Posiciones 
-
+// Posiciones
+// Pasos
 int blockPos[6] = {495, 712, 0, RIGHT, RIGHT, DOWN};
-int sensorPos[6] = {511, 500, 330, RIGHT, LEFT, DOWN};
+int sensorPos[6] = {511, 500, 340, RIGHT, LEFT, DOWN};
 int whitePos[6] = {0, 488, 745, RIGHT, RIGHT, DOWN};
-int blackPos[6] = {0, 488, 745, RIGHT, RIGHT, DOWN};
-int greenPos[6] = {0, 488, 745, RIGHT, RIGHT, DOWN};
-int discardPos[6] = {300, 488, 745, RIGHT, RIGHT, DOWN};
+int blackPos[6] = {0, 598, 745, RIGHT, RIGHT, DOWN};
+int greenPos[6] = {0, 707, 745, RIGHT, RIGHT, DOWN};
+int discardPos[6] = {300, 488, 0, RIGHT, RIGHT, DOWN};
 
+//Micropasos
 int blockPosMicroSteps[6] = {1980, 2848, 0, RIGHT, RIGHT, DOWN};
-int sensorPosMicroSteps[6] = {2045, 2000, 345, RIGHT, LEFT, DOWN};
+int sensorPosMicroSteps[6] = {2045, 2000, 340, RIGHT, LEFT, DOWN};
 int whitePosMicroSteps[6] = {0, 1954, 745, RIGHT, RIGHT, DOWN};
-int blackPosMicroSteps[6] = {0, 1954, 745, RIGHT, RIGHT, DOWN};
-int greenPosMicroSteps[6] = {0, 1954, 745, RIGHT, RIGHT, DOWN};
-int discardPosMicroSteps[6] = {2000, 1954, 745, RIGHT, RIGHT, DOWN};
+int blackPosMicroSteps[6] = {0, 2391, 745, RIGHT, RIGHT, DOWN};
+int greenPosMicroSteps[6] = {0, 2829, 745, RIGHT, RIGHT, DOWN};
+int discardPosMicroSteps[6] = {2000, 1954, 0, RIGHT, RIGHT, DOWN};
 
 
 void setup() {
@@ -81,6 +89,7 @@ void setup() {
 void loop() {
     switch (state) {
         case INIT:
+            Gripper.write(0); //Abre el gripper
             if (digitalRead(onPin) == 1) {
               state = HOME;
             }
@@ -89,11 +98,13 @@ void loop() {
         case HOME:
             homeAllAxes();
             Gripper.write(0); //Abre el gripper
+            ledsHomming();
             if (digitalRead(onPin) == 0) { 
               state = INIT;
             }
             else if (deteccionBloque() == 1) {  
               state = BLOQUE;
+              ledsWorking();
               delay(3000);
             }
             break;
@@ -103,7 +114,8 @@ void loop() {
               lastState = state;  // Guardar el estado actual antes de cambiar
               state = PAUSE;
             } else {
-              goToBlockMicroSteps();
+              goToBlock();
+              // Antes de bajar poe el bloque realiza una revision de que siga ahi
               if (deteccionBloque() == 0) {  
                 state = HOME;
               }
@@ -123,25 +135,74 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-                goToSensorMicroSteps();
-                delay(1000);
-                detectarColor();
+                goToSensor();
+                delay(500);
+                int color = detectarColor();
                 delay(500);
                 switch (color) {
-                  case WHITE:
-                      state = BLANCO;
+                  case 0: // Blanco
+                      if (whiteBlocks <= blocksPerContainers) {
+                        state = BLANCO;
+                        whiteBlocks++;
+                      } else {
+                        state = HOME;
+                      }
                       break;
 
-                  case BLACK:
-                      state = NEGRO;
+                  case 1: // Negro
+                      if (blackBlocks <= blocksPerContainers) {
+                        state = NEGRO;
+                        blackBlocks++;
+                      } else {
+                        state = HOME;
+                      }
                       break;
 
-                  case GREEN:
-                      state = VERDE;
+                  case 2: // Verde
+                      if (greenBlocks <= blocksPerContainers) {
+                        state = VERDE;
+                        greenBlocks++;
+                      } else {
+                        state = HOME;
+                      }
                       break;
 
-                  case OTHER:
-                      state = ERROR;
+                  case 3: // Otro
+                      // Realiza una segunda revision de color como seguridad
+                      int color = detectarColor();
+                      switch (color) {
+                      case 0: // Blanco
+                          if (whiteBlocks <= blocksPerContainers) {
+                            state = BLANCO;
+                            whiteBlocks++;
+                          } else {
+                            state = HOME;
+                          }
+                          break;
+
+                      case 1: // Negro
+                          if (blackBlocks <= blocksPerContainers) {
+                            state = NEGRO;
+                            blackBlocks++;
+                          } else {
+                            state = HOME;
+                          }
+                          break;
+
+                      case 2: // Verde
+                          if (greenBlocks <= blocksPerContainers) {
+                            state = VERDE;
+                            greenBlocks++;
+                          } else {
+                            state = HOME;
+                          }
+                          break;
+
+                      case 3: // Otro
+                          state = ERROR;
+                          break;
+
+                      }
                       break;
                   }
             }
@@ -152,7 +213,8 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-              goToWhiteMicroSteps();
+              goToWhite();
+              ledsHomming();
               state = HOME;
             }
             break;
@@ -162,7 +224,8 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-              goToBlackMicroSteps();
+              goToBlack();
+              ledsHomming();
               state = HOME;
             }
             break;
@@ -172,7 +235,8 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-              goToGreenMicroSteps();
+              goToGreen();
+              ledsHomming();
               state = HOME;
             }
             break;
@@ -182,7 +246,8 @@ void loop() {
               lastState = state;
               state = PAUSE;
             } else {
-              goToDiscardMicroSteps();
+              goToDiscard();
+              ledsHomming();
               state = HOME;
             }
             break;
@@ -193,12 +258,13 @@ void loop() {
               state = lastState;
             } else {
               state = HOME;
+              ledsHomming();
             }
             break;
     }
 }
 
-
+// Inicializacion de puertos
 void portsInit(void) {
   //Mototres a pasos
   stepMotorsInit();
@@ -210,96 +276,60 @@ void portsInit(void) {
   pinMode(onPin, INPUT);
   pinMode(buttonGnd, OUTPUT);
   digitalWrite(buttonGnd,LOW);
+  //Leds
+  pinMode(ledBlue, OUTPUT);
+  pinMode(ledGreen, OUTPUT);
   //Deteccion bloque
   ldrInit();
 }
 
-
+// Funciones de posicicionamiento
 void goToBlock(void) {
-    Gripper.write(0); //Abre el gripper
-    moveToSteps(blockPos);
-    delay(500);
-    Gripper.write(50); //Cierra el gripper
-    delay(500);
-    moveZSteps(1000,UP);
-}
-
-void goToSensor(void) {
-    moveToSteps(sensorPos);
-}
-
-void goToWhite(void) {
-    moveZSteps(330,UP);
-    moveToSteps(whitePos);
-    Gripper.write(0); //Abre el gripper
-    delay(500);
-    moveZSteps(300,UP);
-}
-
-void goToBlack(void) {
-    moveZSteps(330,UP);
-    moveToSteps(blackPos);
-    Gripper.write(0); //Abre el gripper
-    delay(500);
-    moveZSteps(300,UP);
-}
-
-void goToGreen(void) {
-    moveZSteps(330,UP);
-    moveToSteps(greenPos);
-    Gripper.write(0); //Abre el gripper
-    delay(500);
-    moveZSteps(330,UP);
-}
-
-void goToDiscard(void) {
-    moveZSteps(330,UP);
-    moveToSteps(whitePos);
-    Gripper.write(0); //Abre el gripper
-    delay(500);
-    moveZSteps(300,UP);
-}
-
-
-
-void goToBlockMicroSteps(void) {
     Gripper.write(0); //Abre el gripper
     moveToMicroSteps(blockPosMicroSteps);
 }
 
-void goToSensorMicroSteps(void) {
+void goToSensor(void) {
     moveToMicroSteps(sensorPosMicroSteps);
 }
 
-void goToWhiteMicroSteps(void) {
-    moveZSteps(345,UP);
+void goToWhite(void) {
+    moveZSteps(340,UP);
     moveToMicroSteps(whitePosMicroSteps);
     Gripper.write(0); //Abre el gripper
     delay(500);
     moveZSteps(300, UP);
 }
 
-void goToBlackMicroSteps(void) {
-    moveZSteps(345,UP);
+void goToBlack(void) {
+    moveZSteps(340,UP);
     moveToMicroSteps(blackPosMicroSteps);
     Gripper.write(0); //Abre el gripper
     delay(500);
     moveZSteps(300, UP);
 }
 
-void goToGreenMicroSteps(void) {
-    moveZSteps(345,UP);
+void goToGreen(void) {
+    moveZSteps(340,UP);
     moveToMicroSteps(greenPosMicroSteps);
     Gripper.write(0); //Abre el gripper
     delay(500);
     moveZSteps(300, UP);
 }
 
-void goToDiscardMicroSteps(void) {
-    moveZSteps(345,UP);
+void goToDiscard(void) {
+    moveZSteps(340,UP);
     moveToMicroSteps(discardPosMicroSteps);
     Gripper.write(0); //Abre el gripper
     delay(500);
-    moveZSteps(300, UP);
 }
 
+void ledsHomming(void) {
+    digitalWrite(ledGreen,LOW); // Enciende el led verde
+    digitalWrite(ledBlue,HIGH); // Apaga el led azul
+}
+
+void ledsWorking(void) {
+    digitalWrite(ledBlue,LOW); // Enciende el led azul
+    digitalWrite(ledGreen,HIGH); // Apaga el led verde
+}
