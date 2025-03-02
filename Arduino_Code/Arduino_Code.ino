@@ -79,14 +79,80 @@ int blackPosMicroSteps[6] = {0, 2391, 745, RIGHT, RIGHT, DOWN};
 int greenPosMicroSteps[6] = {0, 2829, 745, RIGHT, RIGHT, DOWN};
 int discardPosMicroSteps[6] = {2000, 1954, 0, RIGHT, RIGHT, DOWN};
 
+/*
+int u =0;
+// Variables for Color Pulse Width Measurements
+int redPW = 0;
+int greenPW = 0;
+int bluePW = 0;
+*/
 
 void setup() {
   portsInit();
   state = INIT;
+  // Setup Serial Monitor
+	Serial.begin(9600);
 }
 
 //MAIN
 void loop() {
+  /*
+    if (u==0){
+      u++;
+      homeAllAxes();
+      Gripper.write(0); //Abre el gripper
+      goToBlock();
+      moveZSteps(2258, DOWN);
+      delay(500);
+      Gripper.write(50); //Cierra el gripper
+      delay(500);
+      moveZSteps(1000, UP);
+      goToSensor();
+    }
+    // Read Red Pulse Width
+	redPW = getRedPW();
+	// Delay to stabilize sensor
+	delay(100);
+
+	// Read Green Pulse Width
+	greenPW = getGreenPW();
+	// Delay to stabilize sensor
+	delay(100);
+
+	// Read Blue Pulse Width
+	bluePW = getBluePW();
+	// Delay to stabilize sensor
+	delay(100);
+
+  
+	// Print output to Serial Monitor
+	Serial.print("Red PW = ");
+	Serial.print(redPW);
+	Serial.print(" - Green PW = ");
+	Serial.print(greenPW);
+	Serial.print(" - Blue PW = ");
+	Serial.println(bluePW);
+  
+  int color = detectarColor();
+
+  switch (color) {
+      case 0:
+         Serial.println("Blanco");
+         break;
+
+      case 1:
+         Serial.println("Negro");
+         break;
+
+      case 2:
+          Serial.println("Verde");
+          break;
+
+      case 3:
+          Serial.println("otro");
+          break;
+  }
+  */
     switch (state) {
         case INIT:
             Gripper.write(0); //Abre el gripper
@@ -96,9 +162,9 @@ void loop() {
             break;
 
         case HOME:
+            ledsHomming();
             homeAllAxes();
             Gripper.write(0); //Abre el gripper
-            ledsHomming();
             if (digitalRead(onPin) == 0) { 
               state = INIT;
             }
@@ -254,14 +320,18 @@ void loop() {
 
         case PAUSE:
             delay(5000);
-            if (digitalRead(onPin) == 1) {
+            /*if (digitalRead(onPin) == 1) {
               state = lastState;
             } else {
               state = HOME;
               ledsHomming();
             }
+            */
+            state = HOME;
+            {ledsHomming();
             break;
     }
+    
 }
 
 // Inicializacion de puertos

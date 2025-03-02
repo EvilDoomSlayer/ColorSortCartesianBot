@@ -16,9 +16,9 @@
 #define whiteGreen 24
 #define whiteBlue 24
 //Valores RGB para detectar el color negro
-#define blackRed 210
-#define blackGreen 210
-#define blackBlue 210
+#define blackRed 200
+#define blackGreen 190
+#define blackBlue 160
 //Valores RGB para detectar el color verde
 #define greenRed 140
 #define greenGreen 100
